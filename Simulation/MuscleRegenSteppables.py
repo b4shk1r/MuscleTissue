@@ -376,13 +376,14 @@ class NeutrophilSteppable(SteppableBasePy):
         if necrosisRemain > necrosisThreshold and numRecruited > 0:
             _cap_locs = [[c.xCOM, c.yCOM] for c in self.cell_list_by_type(self.CAPILLARY) if c.dict['fragmented'] == 2]
             CapillaryLocations = np.array(_cap_locs) if _cap_locs else np.empty([0, 2])
-            while numRecruited > 0: # while still recruiting get the coords of capillaries
+            if CapillaryLocations.shape[0] > 0: # guard against no healthy capillaries, which would otherwise spin forever below
+                numRecruited = min(numRecruited, CapillaryLocations.shape[0]) # can't recruit more than there are capillaries to draw from
                 fieldVal = [self.field.HGF[int(x), int(y), 1] for x, y in CapillaryLocations]
                 indexTopRegion = np.argsort(fieldVal)[-numRecruited:]  # sorts to get top numbers (going from the end because sorts low to high)
                 toPlace = CapillaryLocations[indexTopRegion] # where neutrophils get placed
-                numRecruited -= len(toPlace) # Update the numRecruited to subtract neutrophils that have been recruited
-                #print(toPlace)
-                    
+            else:
+                toPlace = np.empty([0, 2])
+
             # Place neutrophils if cell doesn't exist in that location
             for x,y in toPlace:
                 cell = self.cellField[x.item(),y.item(),1]
@@ -870,17 +871,15 @@ class MacrophageSteppable(SteppableBasePy):
                 numRecruited = np.ceil(macroRecruitmentProportion * MCPMean)
                 numRecruited = numRecruited.astype(int)
                       
-                # Monocytes transported to injury site from healthy capillaries 
-                CapillaryLocations = np.empty([0 , 2])
-                while numRecruited > 0: # while still recruiting get the coords of capillaries
-                    for cell in self.cell_list_by_type(self.CAPILLARY): # Get location of all the capillaries 
-                        if cell.dict['fragmented'] == 2: # Only get location of capillaries that are healthy/perfusing
-                            xcoord1 = cell.xCOM 
-                            ycoord1 = cell.yCOM
-                            CapillaryLocations1 = np.array([xcoord1, ycoord1]) # put into an array 
-                            CapillaryLocations = np.vstack((CapillaryLocations,CapillaryLocations1)) # sort locations row wise
-                            numRecruited -= len(CapillaryLocations) # Update the numRecruited to subtract monocytes that have been recruited
-                
+                # Monocytes transported to injury site from healthy capillaries
+                _cap_locs = [[c.xCOM, c.yCOM] for c in self.cell_list_by_type(self.CAPILLARY) if c.dict['fragmented'] == 2] # Only get location of capillaries that are healthy/perfusing
+                CapillaryLocations = np.array(_cap_locs) if _cap_locs else np.empty([0, 2])
+                if CapillaryLocations.shape[0] > 0: # guard against no healthy capillaries, which would otherwise spin forever below
+                    numRecruited = min(numRecruited, CapillaryLocations.shape[0]) # can't recruit more than there are capillaries to draw from
+                    CapillaryLocations = CapillaryLocations[:numRecruited]
+                else:
+                    CapillaryLocations = np.empty([0, 2])
+
                 # Place monocyte if cell doesn't exist in that location 
                 for x,y in CapillaryLocations:
                     cell = self.cellField[x.item(),y.item(),1]
@@ -991,10 +990,10 @@ class MacrophageSteppable(SteppableBasePy):
                                 if cdHGF:
                                     cdHGF.setLambda(0)
                                 if cdMCP:
-                                    cdCMP.setLambda(0)    
+                                    cdMCP.setLambda(0)
                                 cell.dict['phagocytoseLagTime'] += 1
-                    
-            if cell.dict['type'] == 0: # if monocyte 
+
+            if cell.dict['type'] == 0: # if monocyte
                 #chemotax and uptake MCP, VEGF, and TGF
                 cdMCP = self.chemotaxisPlugin.getChemotaxisData(cell, "MCP")
                 cdVEGF = self.chemotaxisPlugin.getChemotaxisData(cell, "VEGF")
@@ -1117,9 +1116,9 @@ class MacrophageSteppable(SteppableBasePy):
                 
                 # Transition to M1 from monocyte in 1-3 days using a gaussian distribution
                 TNFvalue = TNFfield[cell.xCOM, cell.yCOM, cell.zCOM]
-                if mcs > cell.dict['monoM1TransTime'] or TNFvalue > TNFconverter: 
-                    cell.dict['type'] = 1 # transition monocyte into M1 
-                    if TNFvalue > TNFvalue:
+                if mcs > cell.dict['monoM1TransTime'] or TNFvalue > TNFconverter:
+                    cell.dict['type'] = 1 # transition monocyte into M1
+                    if TNFvalue > TNFconverter:
                         TNFfield[cell.xCOM, cell.yCOM, cell.zCOM] = TNFvalue - TNFconverter # remove TNF required for transition
                     
                 
