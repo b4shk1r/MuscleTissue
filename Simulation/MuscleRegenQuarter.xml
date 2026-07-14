@@ -1,0 +1,701 @@
+<CompuCell3D Revision="20210612" Version="4.2.5">
+   
+   <Metadata>
+      
+      <!-- Basic properties simulation -->
+      <NumberOfProcessors>4</NumberOfProcessors>
+      <DebugOutputFrequency>0</DebugOutputFrequency>
+      <!-- <NonParallelModule Name="Potts"/> -->
+   </Metadata>
+   
+   <Potts>
+      
+      <!-- Basic properties of CPM (GGH) algorithm -->
+      <Dimensions x="160" y="208" z="2"/>
+      <Steps>2688</Steps>
+      <Temperature>10.0</Temperature>
+      <NeighborOrder>1</NeighborOrder>
+      <!-- <Boundary_x>Periodic</Boundary_x> -->
+      <!-- <Boundary_y>Periodic</Boundary_y> -->
+      <Flip2DimRatio>45</Flip2DimRatio>
+      <!-- <RandomSeed>12345</RandomSeed> -->
+   </Potts>
+
+   <Steppable Type="PIFInitializer">
+   
+   <!-- Initial layout of cells using PIFF file. Piff files can be generated using PIFGEnerator --> 
+   <PIFName>MuscleInit_Quarter.piff</PIFName>
+   </Steppable>
+   
+<Plugin Name="ContactInternal">
+   <!-- Specification of internal adhesion energies -->
+   <Energy Type1="Fiber" Type2="Fiber">10.0</Energy>
+   <Energy Type1="Fiber" Type2="ECM">10.0</Energy>
+   <Energy Type1="Fiber" Type2="SSC">10.0</Energy>
+   <Energy Type1="Fiber" Type2="Capillary">10.0</Energy>
+   <Energy Type1="Fiber" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="Fiber" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="Fiber" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Fiber" Type2="Wall">10.0</Energy>
+   <Energy Type1="Fiber" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="ECM" Type2="ECM">10.0</Energy>
+   <Energy Type1="ECM" Type2="SSC">10.0</Energy>
+   <Energy Type1="ECM" Type2="Capillary">10.0</Energy>
+   <Energy Type1="ECM" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="ECM" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="ECM" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="ECM" Type2="Wall">10.0</Energy>
+   <Energy Type1="ECM" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="SSC" Type2="SSC">10.0</Energy>
+   <Energy Type1="SSC" Type2="Capillary">10.0</Energy>
+   <Energy Type1="SSC" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="SSC" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="SSC" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="SSC" Type2="Wall">10.0</Energy>
+   <Energy Type1="SSC" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Capillary">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Wall">10.0</Energy>
+   <Energy Type1="Capillary" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Wall">10.0</Energy>
+   <Energy Type1="Neutrophil" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Macrophage" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="Macrophage" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Macrophage" Type2="Wall">10.0</Energy>
+   <Energy Type1="Macrophage" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Necrotic" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Necrotic" Type2="Wall">10.0</Energy>
+   <Energy Type1="Necrotic" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Wall" Type2="Wall">10.0</Energy>
+   <Energy Type1="Wall" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="lymphatic" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Fiber">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="ECM">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="SSC">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Capillary">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Neutrophil">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Macrophage">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Necrotic">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Wall">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="lymphatic">10.0</Energy>
+   <NeighborOrder>1</NeighborOrder>
+</Plugin>
+
+
+   <Plugin Name="CellType">
+      
+      <!-- Listing all cell types in the simulation -->
+      <CellType TypeId="0" TypeName="Medium"/>
+      <CellType TypeId="1" TypeName="Fiber" Freeze=""/>
+      <CellType TypeId="2" TypeName="ECM" Freeze=""/>
+      <CellType TypeId="3" TypeName="SSC"/>
+      <CellType TypeId="4" TypeName="Capillary" Freeze=""/>
+      <CellType TypeId="5" TypeName="Neutrophil"/>
+      <CellType TypeId="6" TypeName="Macrophage"/>
+      <CellType TypeId="7" TypeName="Necrotic" Freeze=""/>
+      <CellType TypeId="8" TypeName="Wall" Freeze=""/>
+      <CellType TypeId="9" TypeName="lymphatic" Freeze =""/>
+      <CellType TypeId="10" TypeName="Fibroblast"/>
+   </Plugin>
+   
+   
+   
+   <Plugin Name="Volume"/>
+
+   <Plugin Name="Surface">
+   </Plugin>
+
+
+   <Plugin Name="CenterOfMass">
+      
+      <!-- Module tracking center of mass of each cell -->
+   </Plugin>
+   
+   <Plugin Name="NeighborTracker">
+      
+      <!-- Module tracking neighboring cells of each cell -->
+   </Plugin>
+   
+
+
+<Plugin Name="Contact">
+   <!-- Specification of adhesion energies -->
+   <Energy Type1="Medium" Type2="Medium">0.0</Energy>
+   <Energy Type1="Medium" Type2="Fiber">0.0</Energy>
+   <Energy Type1="Medium" Type2="ECM">0.0</Energy>
+   <Energy Type1="Medium" Type2="SSC">0.0</Energy>
+   <Energy Type1="Medium" Type2="Capillary">0.0</Energy>
+   <Energy Type1="Medium" Type2="Neutrophil">0.0</Energy>
+   <Energy Type1="Medium" Type2="Macrophage">0.0</Energy>
+   <Energy Type1="Medium" Type2="Necrotic">0.0</Energy>
+   <Energy Type1="Medium" Type2="Wall">0.0</Energy>
+   <Energy Type1="Medium" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="Fiber" Type2="Fiber">0.0</Energy>
+   <Energy Type1="Fiber" Type2="ECM">0.0</Energy>
+   <Energy Type1="Fiber" Type2="SSC">35.0</Energy>
+   <Energy Type1="Fiber" Type2="Capillary">0.0</Energy>
+   <Energy Type1="Fiber" Type2="Neutrophil">35.0</Energy>
+   <Energy Type1="Fiber" Type2="Macrophage">20.0</Energy>
+   <Energy Type1="Fiber" Type2="Necrotic">0.0</Energy>
+   <Energy Type1="Fiber" Type2="Wall">0.0</Energy>
+   <Energy Type1="Fiber" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="ECM" Type2="ECM">0.0</Energy>
+   <Energy Type1="ECM" Type2="SSC">30.0</Energy>
+   <Energy Type1="ECM" Type2="Capillary">0.0</Energy>
+   <Energy Type1="ECM" Type2="Neutrophil">30.0</Energy>
+   <Energy Type1="ECM" Type2="Macrophage">20.0</Energy>
+   <Energy Type1="ECM" Type2="Necrotic">0.0</Energy>
+   <Energy Type1="ECM" Type2="Wall">0.0</Energy>
+   <Energy Type1="ECM" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="SSC" Type2="SSC">35.0</Energy>
+   <Energy Type1="SSC" Type2="Capillary">30.0</Energy>
+   <Energy Type1="SSC" Type2="Neutrophil">15.0</Energy>
+   <Energy Type1="SSC" Type2="Macrophage">15.0</Energy>
+   <Energy Type1="SSC" Type2="Necrotic">30.0</Energy>
+   <Energy Type1="SSC" Type2="Wall">20.0</Energy>
+   <Energy Type1="SSC" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Capillary" Type2="Capillary">0.0</Energy>
+   <Energy Type1="Capillary" Type2="Neutrophil">35.0</Energy>
+   <Energy Type1="Capillary" Type2="Macrophage">20.0</Energy>
+   <Energy Type1="Capillary" Type2="Necrotic">0.0</Energy>
+   <Energy Type1="Capillary" Type2="Wall">0.0</Energy>
+   <Energy Type1="Capillary" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Neutrophil">35.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Macrophage">15.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Necrotic">35.0</Energy>
+   <Energy Type1="Neutrophil" Type2="Wall">20.0</Energy>
+   <Energy Type1="Neutrophil" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Macrophage" Type2="Macrophage">15.0</Energy>
+   <Energy Type1="Macrophage" Type2="Necrotic">20.0</Energy>
+   <Energy Type1="Macrophage" Type2="Wall">20.0</Energy>
+   <Energy Type1="Macrophage" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Necrotic" Type2="Necrotic">0.0</Energy>
+   <Energy Type1="Necrotic" Type2="Wall">0.0</Energy>
+   <Energy Type1="Necrotic" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="Wall" Type2="Wall">0.0</Energy>
+   <Energy Type1="Wall" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="lymphatic" Type2="lymphatic">0.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Medium">0.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Fiber">20.0</Energy>
+   <Energy Type1="Fibroblast" Type2="ECM">20.0</Energy>
+   <Energy Type1="Fibroblast" Type2="SSC">15.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Capillary">20.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Neutrophil">15.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Macrophage">15.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Necrotic">20.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Wall">20.0</Energy>
+   <Energy Type1="Fibroblast" Type2="lymphatic">10.0</Energy>
+   <Energy Type1="Fibroblast" Type2="Fibroblast">15.0</Energy>
+   <NeighborOrder>4</NeighborOrder>
+</Plugin>
+
+   
+    <Plugin Name="Chemotaxis">
+
+
+        <!-- You may repeat ChemicalField element for each chemical field declared in the PDE solvers --> 
+        <!-- Specification of chemotaxis properties of select cell types. --> 
+        
+        <ChemicalField Name="REPEL">
+            <!-- <ChemotaxisByType ChemotactTowards="Fiber" Lambda="-10.0" Type="SSC"/> -->
+            <ChemotaxisByType Type="Neutrophil" Lambda="-10" LogScaledCoef="1"/>
+            <ChemotaxisByType Type="SSC" Lambda="-10" LogScaledCoef="1"/>
+            <ChemotaxisByType Type="Macrophage" Lambda="-10" LogScaledCoef="1"/>
+            <ChemotaxisByType Type="Fibroblast" Lambda="-10" LogScaledCoef="1"/>
+            
+
+        </ChemicalField>
+        
+        
+        <ChemicalField Name="HGF">
+            <!-- <ChemotaxisByType ChemotactTowards="Fiber" Lambda="-10.0" Type="SSC"/> -->
+            <ChemotaxisByType Type="Neutrophil" Lambda="750"/>
+            <!-- <ChemotaxisByType Type="SSC" Lambda="11.3"/> -->
+            <ChemotaxisByType Type="Macrophage" Lambda="9.3"/>
+
+        </ChemicalField>
+
+        <ChemicalField Name="MCP">
+            <!-- <ChemotaxisByType ChemotactTowards="Fiber" Lambda="-10.0" Type="SSC"/> -->
+            <ChemotaxisByType Type="Macrophage" Lambda="9.3"/>
+            <!-- <ChemotaxisByType Type="SSC" Lambda="11.3"/> -->
+
+        </ChemicalField>
+
+        <ChemicalField Name="MMP">
+            <!-- <ChemotaxisByType ChemotactTowards="Fiber" Lambda="-10.0" Type="SSC"/> -->
+            <ChemotaxisByType Type="SSC" Lambda="11.3"/>
+
+        </ChemicalField>
+
+    </Plugin>
+
+   
+   
+  
+   <Plugin Name="Secretion">
+       <!-- <Field Name="HGF" ExtraTimesPerMC="2"> -->
+            <!-- <Secretion Type="Neutrophil">200</Secretion> -->
+            <!-- <SecretionOnContact Type="Medium" SecreteOnContactWith="B">300</SecretionOnContact> -->
+            <!-- <ConstantConcentration Type="Neutrophil">500</ConstantConcentration> -->
+        <!-- </Field> -->
+    </Plugin>
+
+   
+    
+    <Steppable Type="DiffusionSolverFE">
+    <!-- <Steppable Type="FlexibleDiffusionSolverFE"> -->
+ 
+   
+   
+   <Plugin Name="ExternalPotential">
+   
+   <!-- External force applied to cell. Each cell type has different force. -->
+   <!-- For more flexible specification of the constraint (done in Python) please use ExternalPotential plugin without specifying per-type parameters -->
+   <!-- Algorithm options are: PixelBased, CenterOfMassBased -->
+   <Algorithm>PixelBased</Algorithm>
+   <ExternalPotentialParameters CellType="Fiber" x="0.0" y="0.0" z="-10000.0"/>
+   <ExternalPotentialParameters CellType="ECM" x="0.0" y="0.0" z="-10000.0"/>
+   <ExternalPotentialParameters CellType="SSC" x="0.0" y="0.0" z="10000.0"/>
+   <ExternalPotentialParameters CellType="Capillary" x="0.0" y="0.0" z="10000.0"/>
+   <ExternalPotentialParameters CellType="Neutrophil" x="0.0" y="0.0" z="10000.0"/>
+   <ExternalPotentialParameters CellType="Macrophage" x="0.0" y="0.0" z="10000.0"/>
+   <ExternalPotentialParameters CellType="Necrotic" x="0.0" y="0.0" z="-10000.0"/>
+   <ExternalPotentialParameters CellType="Wall" x="0.0" y="0.0" z="0.0"/>
+   <ExternalPotentialParameters CellType="Fibroblast" x="0.0" y="0.0" z="10000.0"/>
+</Plugin>
+
+   
+   
+   
+   
+   <DiffusionField Name="REPEL">
+      <DiffusionData>
+         <FieldName>REPEL</FieldName>
+         <GlobalDiffusionConstant>0</GlobalDiffusionConstant>
+         <GlobalDecayConstant>0</GlobalDecayConstant>
+         <!-- <ExtraTimesPerMCS>0</ExtraTimesPerMCS> -->
+         <!-- Additional options are: -->
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> -->
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> -->
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants -->
+         
+         <!-- Uniform secretion Definition -->
+         <!-- <Secretion Type="Fiber">1</Secretion> -->
+         <!-- <SecretionOnContact SecreteOnContactWith="Medium" Type="Fiber">1</SecretionOnContact> -->
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> -->
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField>
+   
+   
+   <DiffusionField Name="HGF">
+      <DiffusionData>
+         <FieldName>HGF</FieldName>
+         <GlobalDiffusionConstant id="HGFdiffusion">66.38e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id="HGFdecay">0.000228</GlobalDecayConstant>
+         <!-- <ExtraTimesPerMCS>0</ExtraTimesPerMCS> --> 
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <!-- <DiffusionCoefficient CellType="Fiber">0</DiffusionCoefficient> --> 
+         <!-- <DiffusionCoefficient CellType="ECM">1e0</DiffusionCoefficient> --> 
+         <!-- <DiffusionCoefficient CellType="Necrotic">1e0</DiffusionCoefficient> --> 
+         <!-- <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient> --> 
+         <!-- <DecayCoefficient CellType="Fiber">1e-6</DecayCoefficient> --> 
+         <!-- <DecayCoefficient CellType="ECM">1e-6</DecayCoefficient> --> 
+         <!-- <DecayCoefficient CellType="Necrotic">1e-9</DecayCoefficient> --> 
+         <!-- <DecayCoefficient CellType="Wall">0</DecayCoefficient> --> 
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Necrotic">100</Secretion> --> 
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField>
+
+   <DiffusionField Name="MCP">
+      <DiffusionData>
+         <FieldName>MCP</FieldName>
+         <GlobalDiffusionConstant id="MCPdiffusion">186.27e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id ="MCPdecay">0.0124</GlobalDecayConstant>
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> --> 
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <!-- <Periodic/> --> 
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+   
+   
+   <DiffusionField Name="MMP">
+      <DiffusionData>
+         <FieldName>MMP</FieldName>
+         <GlobalDiffusionConstant id="MMPdiffusion">63.40e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id="MMPdecay">0.0112</GlobalDecayConstant>
+         <!-- Additional options are: -->
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> -->
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> -->
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+         <!-- <DecayCoefficient CellType="Fiber">1e-7</DecayCoefficient> -->
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants -->
+         
+         <!-- Uniform secretion Definition -->
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> -->
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> -->
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> -->
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): -->
+            <!-- <Periodic/> -->
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+   
+   
+      <DiffusionField Name="E2">
+      <DiffusionData>
+         <FieldName>E2</FieldName>
+         <GlobalDiffusionConstant>1e0</GlobalDiffusionConstant>
+         <GlobalDecayConstant>1e-5</GlobalDecayConstant>
+         <!-- <ExtraTimesPerMCS>0</ExtraTimesPerMCS> --> 
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Fiber">1</Secretion> -->
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField>
+   
+      <DiffusionField Name="VEGF">
+      <DiffusionData>
+         <FieldName>VEGF</FieldName>
+         <GlobalDiffusionConstant id="VEGFdiffusion">112.10e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id ="VEGFdecay">0.0015</GlobalDecayConstant>
+         <!-- Additional options are: -->
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> -->
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> -->
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants -->
+         
+         <!-- Uniform secretion Definition -->
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> -->
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> -->
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> -->
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> -->
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> -->
+            <!-- Other options are (examples): -->
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): -->
+            <!-- <Periodic/> -->
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> -->
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+   
+      <DiffusionField Name="TNF">
+      <DiffusionData>
+         <FieldName>TNF</FieldName>
+         <GlobalDiffusionConstant id="TNFdiffusion">138.95e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id ="TNFdecay">0.00076272</GlobalDecayConstant>
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> --> 
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <!-- <Periodic/> --> 
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+   
+   <DiffusionField Name="IL10">
+      <DiffusionData>
+         <FieldName>IL10</FieldName>
+         <GlobalDiffusionConstant id="IL10diffusion">135.17e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id ="IL10decay"> 0.0012</GlobalDecayConstant>
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> --> 
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <!-- <Periodic/> --> 
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+   
+      <DiffusionField Name="TGF">
+      <DiffusionData>
+         <FieldName>TGF</FieldName>
+         <GlobalDiffusionConstant id="TGFdiffusion">90.33e-3</GlobalDiffusionConstant>
+         <GlobalDecayConstant id ="TGFdecay">0.0242</GlobalDecayConstant>
+         <!-- Additional options are: --> 
+         <!-- <InitialConcentrationExpression>x*y</InitialConcentrationExpression> --> 
+         <!-- <ConcentrationFileName>INITIAL CONCENTRATION FIELD - typically a file with path Simulation/NAME_OF_THE_FILE.txt</ConcentrationFileName> --> 
+         <DiffusionCoefficient CellType="Wall">0.0</DiffusionCoefficient>
+         <DecayCoefficient CellType="Wall">0</DecayCoefficient>
+      </DiffusionData>
+      <SecretionData>
+         <!-- When secretion is defined inside DissufionSolverFE all secretion constants are scaled automaticaly to account for the extra calls to the diffusion step when handling large diffusion constants --> 
+         
+         <!-- Uniform secretion Definition --> 
+         <!-- <Secretion Type="Neutrophil">10.0</Secretion> --> 
+         <!-- <SecretionOnContact SecreteOnContactWith="Fiber,ECM,SSC,Capillary,Neutrophil,Necrotic" Type="Necrotic">0.2</SecretionOnContact> --> 
+         <!-- <ConstantConcentration Type="Necrotic">0.1</ConstantConcentration> --> 
+      </SecretionData>
+      <BoundaryConditions>
+         <Plane Axis="X">
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantValue PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Y">
+            <!-- <ConstantDerivative PlanePosition="Min" Value="10.0"/> --> 
+            <!-- <ConstantDerivative PlanePosition="Max" Value="5.0"/> --> 
+            <!-- Other options are (examples): --> 
+            <Periodic/>
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+         <Plane Axis="Z">
+            <ConstantDerivative PlanePosition="Min" Value="0.0"/>
+            <ConstantDerivative PlanePosition="Max" Value="0.0"/>
+            <!-- Other options are (examples): --> 
+            <!-- <Periodic/> --> 
+            <!-- <ConstantValue PlanePosition="Min" Value="10.0"/> --> 
+         </Plane>
+      </BoundaryConditions>
+   </DiffusionField> 
+  
+</Steppable>
+ 
+<Plugin Name="FocalPointPlasticity">
+   <Local/>
+   
+   <Parameters Type1="ECM" Type2="Fibroblast">
+      <Lambda>10</Lambda>
+      <ActivationEnergy>-50</ActivationEnergy>
+      <TargetDistance>7</TargetDistance>
+      <MaxDistance>20</MaxDistance>
+      <MaxNumberOfJunctions NeighborOrder="1">1</MaxNumberOfJunctions>
+   </Parameters>
+   
+   <NeighborOrder>1</NeighborOrder>
+</Plugin>
+ 
+
+</CompuCell3D>

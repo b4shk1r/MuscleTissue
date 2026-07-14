@@ -10,7 +10,12 @@ Simulation/_settings.sqlite
 
 # Large initial condition / simulation outputs
 MuscleInit_Complete_Final.piff
+MuscleInit_Quarter.piff
 run1_data/
 run2_data/
 run3_data/
 run3_data.zip
+
+# Simulation run outputs (regenerated on every run, land in repo root)
+*.txt
+sscLiveCount.csv

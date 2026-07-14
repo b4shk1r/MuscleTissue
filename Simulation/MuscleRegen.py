@@ -16,6 +16,9 @@ CompuCellSetup.register_steppable(steppable=PlotSteppable(frequency=20))
 from MuscleRegenSteppables import FileSteppable
 CompuCellSetup.register_steppable(steppable=FileSteppable(frequency=4))
 
+from MuscleRegenSteppables import SSCPeakTrackerSteppable
+CompuCellSetup.register_steppable(steppable=SSCPeakTrackerSteppable(frequency=1))
+
 from MuscleRegenSteppables import NecrosisSteppable
 CompuCellSetup.register_steppable(steppable=NecrosisSteppable(frequency=4))
 

@@ -273,8 +273,11 @@ class NecrosisSteppable(SteppableBasePy): # Initialize muscle injury
 
     def step(self, mcs):
         if mcs == 0:
-            xcoord = np.random.randint(50,250)
-            ycoord = np.random.randint(50,350)#bounds restricted to always pick somewhere randomly in the tissue
+            # bounds restricted to always pick somewhere randomly in the tissue;
+            # expressed as fractions of the domain (from the original 50-250/50-350 margins
+            # on the 321x417 full-scale tissue) so this self-scales to any Dimensions/PIFF size
+            xcoord = np.random.randint(int(0.1558 * self.dim.x), int(0.7788 * self.dim.x))
+            ycoord = np.random.randint(int(0.1199 * self.dim.y), int(0.8393 * self.dim.y))
 
 
             InitialFiber = 0
@@ -463,7 +466,10 @@ class SSCSteppable(SteppableBasePy):
         # Initialize SSC (1 ssc per 4 fibers)
         global num_cells 
         # num_cells = np.round(num_fiber_cells * sscToInitialFiber)
-        num_cells = math.floor(numFiberCells/sscToInitialFiber) 
+        num_cells = math.floor(numFiberCells/sscToInitialFiber)
+        if num_cells <= 0:
+            raise RuntimeError(f"SSC seeding would place 0 cells (numFiberCells={numFiberCells}, "
+                                f"sscToInitialFiber={sscToInitialFiber}); crop has too few fiber clusters for this ratio.")
 
         global newMyotube
         newMyotube = 0
@@ -820,9 +826,12 @@ class MacrophageSteppable(SteppableBasePy):
         SteppableBasePy.__init__(self, frequency)
         
     def start(self):
-        # Initialize resident macrophages       
+        # Initialize resident macrophages
         num_cells = math.floor(numFiberCells*macToInitialFiber)
-        
+        if num_cells <= 0:
+            raise RuntimeError(f"Resident macrophage seeding would place 0 cells (numFiberCells={numFiberCells}, "
+                                f"macToInitialFiber={macToInitialFiber}); crop has too few fiber clusters for this ratio.")
+
         for i in range(num_cells):
             isPlaced = False
             
@@ -1623,6 +1632,40 @@ class FileSteppable(SteppableBasePy): # Write output to files
             self.file11.close()
         return
 
+class SSCPeakTrackerSteppable(SteppableBasePy): # Tracks live SSC-lineage count every step for RL-tractability sizing
+    def __init__(self, frequency=1):
+        SteppableBasePy.__init__(self, frequency)
+        self.peakCount = -1
+        self.peakMCS = -1
+
+    def start(self):
+        if ifDataSave == 1:
+            if ifPythonCall:
+                fileDirUp = outputPath+f'/Sample_{SampleNumber}'
+            else:
+                fileDir = os.path.dirname(os.path.abspath(__file__))
+                fileDirUp = os.path.dirname(fileDir)
+            self.sscTrackFile = open(fileDirUp+"/sscLiveCount.csv", "w", buffering=1)
+            self.sscTrackFile.write("mcs,liveSSCCount\n")
+
+    def step(self, mcs):
+        count = len(self.cell_list_by_type(self.SSC)) # total SSC-lineage (SSC+myoblast+myocyte), same definition PlotSteppable uses for "TotalSSC"
+        if count > self.peakCount:
+            self.peakCount = count
+            self.peakMCS = mcs
+        if ifDataSave == 1:
+            self.sscTrackFile.write(f"{mcs},{count}\n")
+
+    def finish(self):
+        print(f"Peak live SSC count: {self.peakCount} at step {self.peakMCS}", flush=True)
+        if ifDataSave == 1:
+            self.sscTrackFile.close()
+
+    def on_stop(self):
+        print(f"Peak live SSC count: {self.peakCount} at step {self.peakMCS}", flush=True)
+        if ifDataSave == 1:
+            self.sscTrackFile.close()
+
 class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal secretion
     def __init__(self, frequency=1):
         SteppableBasePy.__init__(self, frequency)
@@ -1631,34 +1674,42 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
 
     def start(self):
         print("Initializing fiber clusters...", flush=True)
-        # join all connected fibers into one cluster
+        # join all connected fibers into one cluster via union-find over CC3D cell ids.
+        # (previously an O(N^2) membership scan across growing cluster lists -- pathologically
+        # slow for large fiber pixel counts; union-find with path compression is near-linear)
         global fiberGroups
-        fiberGroups = {}
-        for cell in self.cell_list_by_type(self.FIBER): # Check all fibers
-            cluster = None
+        fiber_cells = list(self.cell_list_by_type(self.FIBER))
+        parent = {cell.id: cell.id for cell in fiber_cells}
+
+        def find(cid):
+            root = cid
+            while parent[root] != root:
+                root = parent[root]
+            while parent[cid] != root:
+                parent[cid], cid = root, parent[cid]
+            return root
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        for cell in fiber_cells: # Check all fibers
             for neighbor, _ in self.get_cell_neighbor_data_list(cell): # Check current fiber neighbors
                 if neighbor and neighbor.type == self.FIBER: # Make sure neighbor is a fiber
-                    for group in fiberGroups: # For each cluster
-                        if group != cluster:
-                            if any(neighbor.id == item.id for item in fiberGroups[group]):
-                            # if neighbor in fiberGroups[group]: Go through existing clusters to see if neighbor is in cluster
-                                if cluster != None: # already assigned to a cluster 
-                                    fiberGroups[cluster].extend(fiberGroups[group]) # Adding connecting groups
-                                    fiberGroups.pop(group) # Gets rid of the group that we added so not duplicated
-                                else: 
-                                   fiberGroups[group].append(cell) # Not in a cluster so adding to nearby existing cluster
-                                   cluster = group
-                                break
-            if cluster == None:
-                fiberGroups[cell.clusterId] = [cell] # Starting a new cluster if no neighbors are a cluster
-        
-        compartmentNum = 1        
+                    union(cell.id, neighbor.id)
+
+        fiberGroups = {}
+        for cell in fiber_cells:
+            fiberGroups.setdefault(find(cell.id), []).append(cell)
+
+        compartmentNum = 1
         for group in fiberGroups:
             for cell in fiberGroups[group]:
                 self.reassign_cluster_id(cell, group)
                 cell.dict['clusterNum'] = compartmentNum
                 compartmentNum += 1
-        
+
         print(f"Fiber clusters done. Starting simulation...", flush=True)
         global numFiberCells
         numFiberCells = len(fiberGroups)
@@ -2164,6 +2215,9 @@ class FibroblastSteppable(SteppableBasePy):
     def start(self):
         # Initialize Fibroblasts (1 fibroblast per 2 fiber)
         num_cells =  math.floor(numFiberCells/fibroblastToInitialFiber)
+        if num_cells <= 0:
+            raise RuntimeError(f"Fibroblast seeding would place 0 cells (numFiberCells={numFiberCells}, "
+                                f"fibroblastToInitialFiber={fibroblastToInitialFiber}); crop has too few fiber clusters for this ratio.")
         timeChronicExposureTGF  = 0 # counter for the amount of time fibroblast has been exposed to chronic levels of TGF
         
         # Generate given number of cells where other cells don't already exist
