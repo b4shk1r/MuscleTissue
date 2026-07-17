@@ -1672,6 +1672,17 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
         # Used to visualize clusters of fibers
         self.track_cell_level_scalar_attribute(field_name='clusterNum', attribute_name='clusterNum')
 
+    def _update_diffusion_if_changed(self, xml_id, new_value, rel_tol=0.02):
+        # Every write to a diffusion constant's XML element dirties the whole shared
+        # DiffusionSolverFE module (all 9 fields are declared under one Steppable block),
+        # which makes CC3D rebuild that module's solver state on the next MCS -- an
+        # expensive operation relative to how slowly collagen-driven diffusivity actually
+        # moves. Skip the write unless the value changed enough to be worth that cost.
+        elem = self.get_xml_element(xml_id)
+        old_value = float(elem.cdata)
+        if old_value == 0 or abs(new_value - old_value) / abs(old_value) > rel_tol:
+            elem.cdata = float(new_value)
+
     def start(self):
         print("Initializing fiber clusters...", flush=True)
         # join all connected fibers into one cluster via union-find over CC3D cell ids.
@@ -1762,40 +1773,25 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
             #print(updatedCollagenFraction)
             # VEGF calc
             VEGFdiffusivity = (133*math.exp(-updatedCollagenFraction**(1/2)*(2.46/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(2.46/0.55)))
-            # get the xml element and place new value
-            VEGFdiffusion = self.get_xml_element('VEGFdiffusion')
-            #print('VEGF', VEGFdiffusion.cdata)
-            VEGFdiffusion.cdata = float(VEGFdiffusivity*10**-3)  
+            self._update_diffusion_if_changed('VEGFdiffusion', VEGFdiffusivity*10**-3)
             # HGF calc
             HGFdiffusivity = (86.44*math.exp(-updatedCollagenFraction**(1/2)*(3.80/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(3.80/0.55)))
-            # get the xml element and place new value
-            HGFdiffusion = self.get_xml_element('HGFdiffusion')
-            HGFdiffusion.cdata = float(HGFdiffusivity*10**-3)  
+            self._update_diffusion_if_changed('HGFdiffusion', HGFdiffusivity*10**-3)
             # MMP calc
             MMPdiffusivity = (83.36*math.exp(-updatedCollagenFraction**(1/2)*(3.94/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(3.94/0.55)))
-            # get the xml element and place new value
-            MMPdiffusion = self.get_xml_element('MMPdiffusion')
-            MMPdiffusion.cdata = float(MMPdiffusivity*10**-3)  
+            self._update_diffusion_if_changed('MMPdiffusion', MMPdiffusivity*10**-3)
             # MCP calc
             MCPdiffusivity = (207.88*math.exp(-updatedCollagenFraction**(1/2)*(1.58/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(1.58/0.55)))
-            # get the xml element and place new value
-            MCPdiffusion = self.get_xml_element('MCPdiffusion')
-            MCPdiffusion.cdata = float(MCPdiffusivity*10**-3)  
+            self._update_diffusion_if_changed('MCPdiffusion', MCPdiffusivity*10**-3)
             # TGF calc
             TGFdiffusivity = (110.96*math.exp(-updatedCollagenFraction**(1/2)*(2.96/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(2.96/0.55)))
-            # get the xml element and place new value
-            TGFdiffusion = self.get_xml_element('TGFdiffusion')
-            TGFdiffusion.cdata = float(TGFdiffusivity*10**-3)  
-            # TNF calc  
+            self._update_diffusion_if_changed('TGFdiffusion', TGFdiffusivity*10**-3)
+            # TNF calc
             TNFdiffusivity = (160.22*math.exp(-updatedCollagenFraction**(1/2)*(2.05/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(2.05/0.55)))
-            # get the xml element and place new value
-            TNFdiffusion = self.get_xml_element('TNFdiffusion')
-            TNFdiffusion.cdata = float(TNFdiffusivity*10**-3) 
-            # IL-10 calc  
+            self._update_diffusion_if_changed('TNFdiffusion', TNFdiffusivity*10**-3)
+            # IL-10 calc
             IL10diffusivity = (156.41*math.exp(-updatedCollagenFraction**(1/2)*(2.10/20))) * (math.exp(-(7.8*10**-4)**(1/2)*(2.10/0.55)))
-            # get the xml element and place new value
-            IL10diffusion = self.get_xml_element('IL10diffusion')
-            IL10diffusion.cdata = float(IL10diffusivity*10**-3)  
+            self._update_diffusion_if_changed('IL10diffusion', IL10diffusivity*10**-3)
                      
 class LymphaticSteppable(SteppableBasePy): # pulls cells toward lymph, removes chemokines, removes ssc, neutrophils, and macrophages
     def __init__(self, frequency=1):

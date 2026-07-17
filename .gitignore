@@ -19,3 +19,6 @@ run3_data.zip
 # Simulation run outputs (regenerated on every run, land in repo root)
 *.txt
 sscLiveCount.csv
+
+# Default CC3D CLI output folders (created next to the .cc3d file when -o is omitted)
+*_cc3d_*/
