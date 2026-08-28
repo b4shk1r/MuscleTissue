@@ -1,0 +1,14 @@
+# Apptainer image built from alliance_hpc/cc3d.def
+cc3d.sif
+*.sif
+
+# SLURM job logs and run output
+*.out
+muscleregen_results/
+test_out/
+qt_out/
+
+# OS / editor cruft
+.DS_Store
+__pycache__/
+*.pyc

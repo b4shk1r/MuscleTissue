@@ -37,6 +37,13 @@ This CompuCell3D model is described in the eLife publication: "Agent-based model
 - After completing the installation, open the `MuscleRegen.cc3d` file included in the model files through the CC3D player.
 - This will run the model in the CompuCell3D Player.
 
+## Running headless on an HPC cluster
+
+To run the model without the GUI on a SLURM cluster (Digital Research Alliance of
+Canada / Compute Canada), see [`alliance_hpc/README.md`](alliance_hpc/README.md).
+It provides an Apptainer container recipe and SLURM job scripts for single runs
+and replicate arrays.
+
 ## Additional Information
 
 - This model was developed and tested using CompuCell3D version 4.3.2.

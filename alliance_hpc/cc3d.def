@@ -1,0 +1,35 @@
+Bootstrap: docker
+From: condaforge/miniforge3:latest
+
+# CompuCell3D in an Apptainer container for the Digital Research Alliance of Canada clusters.
+# conda is allowed *inside* a container (the no-Anaconda policy does not apply here).
+#
+# Build (on an Alliance login node, e.g. Nibi):
+#     module load apptainer
+#     apptainer build cc3d.sif cc3d.def
+# If an unprivileged build is refused, build in an interactive job (salloc) or on a
+# machine where you have root/Docker, then copy cc3d.sif to the cluster.
+#
+# Note: the miniforge3:latest base image pins a very new Python in its *base* env,
+# which CompuCell3D does not support -- so we install into a fresh `cc3d` env and
+# let the solver choose a compatible Python.
+#
+# rtree (spatial index used by MuscleRegenSteppables.py) is NOT bundled with CC3D
+# and must be installed alongside it -- do not drop it.
+
+%post
+    apt-get update && apt-get install -y --no-install-recommends \
+        xvfb libgl1 libglx-mesa0 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
+
+    # Unpinned = newest CC3D on the compucell3d channel. To reproduce the paper
+    # (eLife 91924, CC3D 4.3.2) use:  compucell3d=4.3.*
+    mamba create -y -n cc3d -c compucell3d -c conda-forge \
+        compucell3d rtree
+    mamba clean -a -y
+
+%environment
+    export MPLBACKEND=Agg
+    export PATH=/opt/conda/envs/cc3d/bin:$PATH
+
+%runscript
+    exec xvfb-run -a python -m cc3d.run_script "$@"
