@@ -1621,48 +1621,42 @@ class FileSteppable(SteppableBasePy): # Write output to files
             # Display closing of files and close files
             self.file2.write("Closing file\n\n")
             self.file2.close()
-            # self.file3.write("Closing file\n\n")
-            # self.file3.close()
+            self.file3.close()  # SSCdata.txt -- close() had been commented out, so the file was never flushed
             # self.file4.write("Closing file\n\n")
             # self.file4.close()
             # self.file5.write("Closing file\n\n")
             # self.file5.close()
             self.file6.write("Closing file\n\n")
             self.file6.close()
-            # self.file7.write("Closing file\n\n")
-            # self.file7.close()
+            self.file7.close()  # fieldData.txt -- close() had been commented out, so the file was never flushed
             self.file8.write("Closing file\n\n")
             self.file8.close()
             self.file9.write("Closing file\n\n")
             self.file9.close()
             self.file10.write("Closing file\n\n")
             self.file10.close()
-            # self.file11.write("Closing file\n\n")
-            # self.file11.close()
+            self.file11.close()  # ecmDynamics.txt -- close() had been commented out, so the file was never flushed
         return
     def on_stop(self):
         if ifDataSave == 1:
             # Display closing of files and close files
             self.file2.write("Closing file\n\n")
             self.file2.close()
-            # self.file3.write("Closing file\n\n")
-            # self.file3.close()
+            self.file3.close()  # SSCdata.txt -- close() had been commented out, so the file was never flushed
             # self.file4.write("Closing file\n\n")
             # self.file4.close()
             # self.file5.write("Closing file\n\n")
             # self.file5.close()
             self.file6.write("Closing file\n\n")
             self.file6.close()
-            # self.file7.write("Closing file\n\n")
-            # self.file7.close()
+            self.file7.close()  # fieldData.txt -- close() had been commented out, so the file was never flushed
             self.file8.write("Closing file\n\n")
             self.file8.close()
             self.file9.write("Closing file\n\n")
             self.file9.close()
             self.file10.write("Closing file\n\n")
             self.file10.close()
-            # self.file11.write("Closing file\n\n")
-            # self.file11.close()
+            self.file11.close()  # ecmDynamics.txt -- close() had been commented out, so the file was never flushed
         return
 
 class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal secretion
