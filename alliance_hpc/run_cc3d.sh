@@ -34,8 +34,17 @@ rsync -a --exclude='.git' --exclude='cc3d.sif' --exclude='alliance_hpc' \
 sed -i 's/^ifDataSave = 0/ifDataSave = 1/' \
     "$RESULTS/model/Simulation/MuscleRegenSteppables.py"
 
+# Optional determinism: `MUSCLEREGEN_SEED=123 sbatch alliance_hpc/run_cc3d.sh`
+# seeds numpy + random (via the env var, read in MuscleRegenSteppables.py) and
+# the Potts core RNG (via <RandomSeed> injected here). Unset = distinct replicate.
+if [ -n "$MUSCLEREGEN_SEED" ]; then
+    sed -i "s|<!-- <RandomSeed>.*</RandomSeed> -->|<RandomSeed>${MUSCLEREGEN_SEED}</RandomSeed>|" \
+        "$RESULTS/model/Simulation/MuscleRegen.xml"
+    echo "seeded run: MUSCLEREGEN_SEED=$MUSCLEREGEN_SEED"
+fi
+
 echo "START $(date)"
-apptainer exec --cleanenv --bind "$RESULTS" "$SIF" \
+apptainer exec --cleanenv --env MUSCLEREGEN_SEED="$MUSCLEREGEN_SEED" --bind "$RESULTS" "$SIF" \
     xvfb-run -a python -m cc3d.run_script \
         -i "$RESULTS/model/MuscleRegen.cc3d" \
         -o "$RESULTS/lattice" \

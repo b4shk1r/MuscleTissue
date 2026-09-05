@@ -5,9 +5,24 @@ from cc3d.CompuCellSetup import persistent_globals as pg
 from rtree import index
 import numpy as np
 import random
-# random.seed(12345)
 import math
 import os
+
+# Optional determinism. Set the env var MUSCLEREGEN_SEED to an integer to seed
+# both RNGs that the Python steppables use (numpy is the dominant source of
+# stochasticity -- cell placement, every divide/diff/apoptosis draw, injury site,
+# recruitment, ...). Unset = auto-seed from system entropy, i.e. the published
+# behaviour that the run_cc3d_array.sh replicates rely on.
+# NOTE: the CC3D-core RNG (Potts spin-flip + Metropolis acceptance,
+# divide_cell_random_orientation) is seeded separately via <RandomSeed> in the
+# XML -- the run scripts / rl_env inject it from the same env var. Full bitwise
+# reproducibility still needs empirical verification on the target CC3D build.
+MUSCLEREGEN_SEED = os.environ.get("MUSCLEREGEN_SEED")
+if MUSCLEREGEN_SEED is not None and MUSCLEREGEN_SEED != "":
+    _seed = int(MUSCLEREGEN_SEED)
+    np.random.seed(_seed)
+    random.seed(_seed)
+    print(f"[MuscleRegen] seeded numpy + random with MUSCLEREGEN_SEED={_seed}", flush=True)
 
 #VARIABLES#
 
