@@ -12,7 +12,10 @@ import os
 #VARIABLES#
 
 # Simulation Variables
-# Dimensions need to be updated for every new histology image
+# Lattice dimensions are read at runtime from self.dim.x / self.dim.y (set by the
+# <Dimensions> tag in the active XML) so the model self-scales to the quarter and
+# RL variants. These constants are kept only for reference to the published full
+# cross-section; nothing should use them directly.
 xdim = 321
 ydim = 417
 timeconverter = 60/15 # 1 mcs = 15 minute, conversion factor from hours to mcs
@@ -515,9 +518,9 @@ class SSCSteppable(SteppableBasePy):
         IL10field = self.field.IL10
 
         if mcs % SSCRecruitmentFreq == 0 and necrosisRemain > macRecruitStop:
-            HGF_fieldval = np.zeros((xdim,ydim))
-            MMP_fieldval = np.zeros((xdim,ydim))
-            TGF_fieldval = np.zeros((xdim,ydim))
+            HGF_fieldval = np.zeros((self.dim.x,self.dim.y))
+            MMP_fieldval = np.zeros((self.dim.x,self.dim.y))
+            TGF_fieldval = np.zeros((self.dim.x,self.dim.y))
             for i in range(0,self.dim.x-1):
                 for j in range(0,self.dim.y-1):
                     HGF_fieldval[i,j] = HGFfield[i,j,1]
@@ -876,8 +879,8 @@ class MacrophageSteppable(SteppableBasePy):
         if mcs %6 == 0: 
             MCPfield = self.field.MCP
             TGFfield = self.field.TGF
-            TGF_fieldval = np.zeros((xdim,ydim))
-            MCP_fieldval = np.zeros((xdim,ydim))
+            TGF_fieldval = np.zeros((self.dim.x,self.dim.y))
+            MCP_fieldval = np.zeros((self.dim.x,self.dim.y))
             for i in range(0,self.dim.x-1):
                 for j in range(0,self.dim.y-1):
                     MCP_fieldval[i,j] = MCPfield[i,j,1]
@@ -1558,43 +1561,43 @@ class FileSteppable(SteppableBasePy): # Write output to files
             cytokineCheck = [48, 96, 288, 480, 672, 1344, 2016, 2684] # check cytokine levels and ecm dynamics at 12 hrs, 1 d, 3 d, 5 d, 7 d, 14 d, 21 d, 28 d
             if mcs in cytokineCheck: 
                 MCPfield = self.field.MCP
-                MCP_fieldval = np.zeros((xdim,ydim))
+                MCP_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         MCP_fieldval[i,j] = MCPfield[i,j,1]
                 MCPMean = np.mean(MCP_fieldval)
                 HGFfield = self.field.HGF
-                HGF_fieldval = np.zeros((xdim,ydim))
+                HGF_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         HGF_fieldval[i,j] = HGFfield[i,j,1]
                 HGFMean = np.mean(HGF_fieldval)
                 MMPfield = self.field.MMP
-                MMP_fieldval = np.zeros((xdim,ydim))
+                MMP_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         MMP_fieldval[i,j] = MMPfield[i,j,1]
                 MMPMean = np.mean(MMP_fieldval)
                 TGFfield = self.field.TGF
-                TGF_fieldval = np.zeros((xdim,ydim))
+                TGF_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         TGF_fieldval[i,j] = TGFfield[i,j,1]
                 TGFMean = np.mean(TGF_fieldval)
                 TNFfield = self.field.TNF
-                TNF_fieldval = np.zeros((xdim,ydim))
+                TNF_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         TNF_fieldval[i,j] = TNFfield[i,j,1]
                 TNFMean = np.mean(TNF_fieldval)
                 IL10field = self.field.IL10
-                IL10_fieldval = np.zeros((xdim,ydim))
+                IL10_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         IL10_fieldval[i,j] = IL10field[i,j,1]
                 IL10Mean = np.mean(IL10_fieldval)
                 VEGFfield = self.field.VEGF
-                VEGF_fieldval = np.zeros((xdim,ydim))
+                VEGF_fieldval = np.zeros((self.dim.x,self.dim.y))
                 for i in range(0,self.dim.x-1):
                     for j in range(0,self.dim.y-1):
                         VEGF_fieldval[i,j] = VEGFfield[i,j,1]
