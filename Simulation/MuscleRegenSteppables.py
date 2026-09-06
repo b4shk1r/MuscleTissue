@@ -406,25 +406,24 @@ class NeutrophilSteppable(SteppableBasePy):
         # Neutrophils transported to injury site from healthy capillaries as long as there is enough necrosis  
         global necrosisRemain
         necrosisRemain = fiberNecrosis/intFiberNecrosis # get amount necrosis relative to initial 
+        toPlace = np.empty([0, 2])
         if necrosisRemain > necrosisThreshold and numRecruited > 0:
-            CapillaryLocations = np.empty([0 , 2])
-            while numRecruited > 0: # while still recruiting get the coords of capillaries
-                fieldVal = [] 
-                for cell in self.cell_list_by_type(self.CAPILLARY): # Get location of all the capillaries 
-                    if cell.dict['fragmented'] == 2: # Only get location of capillaries that are healthy/perfusing
-                        xcoord1 = cell.xCOM 
-                        ycoord1 = cell.yCOM
-                        CapillaryLocations1 = np.array([xcoord1, ycoord1]) # put into an array 
-                        CapillaryLocations = np.vstack((CapillaryLocations,CapillaryLocations1)) # sort locations row wise
-                
-                # Prioritize locations based on hgf levels
-                for x,y in CapillaryLocations:
-                    fieldVal.append(self.field.HGF[x.item(), y.item(), 1]) # Gets values of HGF at each capillary location 
-                indexTopRegion = np.argsort(fieldVal)[-numRecruited:]  # sorts to get top numbers (going from the end because sorts low to high)
-                toPlace = CapillaryLocations[indexTopRegion] # where neutrophils get placed
-                numRecruited -= len(toPlace) # Update the numRecruited to subtract neutrophils that have been recruited
-                #print(toPlace)
-                    
+            # Healthy/perfusing capillaries are the transport entry points. The
+            # original grew CapillaryLocations by np.vstack inside a
+            # while-numRecruited>0 loop (never resetting it), which is O(n^2) in
+            # numRecruited and can take ~20 s/MCS right after injury. Gather them
+            # once; place at most one neutrophil per healthy capillary this MCS
+            # (the placement loop already no-ops on re-used / occupied sites).
+            _cap = [[c.xCOM, c.yCOM] for c in self.cell_list_by_type(self.CAPILLARY)
+                    if c.dict['fragmented'] == 2]
+            if _cap:
+                CapillaryLocations = np.array(_cap)
+                k = min(numRecruited, CapillaryLocations.shape[0])
+                fieldVal = [self.field.HGF[int(x), int(y), 1] for x, y in CapillaryLocations]
+                indexTopRegion = np.argsort(fieldVal)[-k:]
+                toPlace = CapillaryLocations[indexTopRegion]
+
+        if toPlace.shape[0] > 0:
             # Place neutrophils if cell doesn't exist in that location
             for x,y in toPlace:
                 cell = self.cellField[x.item(),y.item(),1]
@@ -549,43 +548,38 @@ class SSCSteppable(SteppableBasePy):
         IL10field = self.field.IL10
 
         if mcs % SSCRecruitmentFreq == 0 and necrosisRemain > macRecruitStop:
-            HGF_fieldval = np.zeros((self.dim.x,self.dim.y))
-            MMP_fieldval = np.zeros((self.dim.x,self.dim.y))
-            TGF_fieldval = np.zeros((self.dim.x,self.dim.y))
-            for i in range(0,self.dim.x-1):
-                for j in range(0,self.dim.y-1):
-                    HGF_fieldval[i,j] = HGFfield[i,j,1]
-                    MMP_fieldval[i,j] = MMPfield[i,j,1]
-                    TGF_fieldval[i,j] = TGFfield[i,j,1]
-            HGFMean = np.mean(HGF_fieldval)
-            MMPMean = np.mean(MMP_fieldval)
-            TGFMean = np.mean(TGF_fieldval)
-             
-            # Recruit SSC proportional to sum of mean HGF + MMP - TGF every time step
-            numRecruited = np.ceil(recruitmentProportionSSC * (HGFMean + MMPMean - TGFMean))
-            numRecruited = numRecruited.astype(int)
+            # Field means by a 500-point random sample (was a full-lattice Python
+            # loop -- 33k-133k iterations every MCS).
+            _sx = np.random.randint(0, self.dim.x - 1, 500)
+            _sy = np.random.randint(0, self.dim.y - 1, 500)
+            HGFMean = float(np.mean([HGFfield[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
+            MMPMean = float(np.mean([MMPfield[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
+            TGFMean = float(np.mean([TGFfield[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
 
-            # Randomly select spots and check to make sure potential spots have low enough repel
-            fieldVal = []
+            # Recruit SSC proportional to sum of mean HGF + MMP - TGF every time step
+            numRecruited = int(np.ceil(recruitmentProportionSSC * (HGFMean + MMPMean - TGFMean)))
+
+            # Randomly select candidate spots with low enough repel (was a
+            # one-row-at-a-time np.vstack loop -- O(n^2) in numRecruited).
             fieldRepel = self.field.REPEL
-            coord = np.empty([0 , 2])
-            numRecruitedTemp = numRecruited * recruitMultiplier
-            while numRecruitedTemp > 0:
-                xcoord1 = np.random.randint(1,self.dim.x)
-                ycoord1 = np.random.randint(1,self.dim.y)
-                coord1 = np.array([xcoord1, ycoord1])
-                
-                valueRepel = fieldRepel[xcoord1, ycoord1, 1] # Temp fix for layers
-                if valueRepel < 0.1:
-                  coord = np.vstack((coord,coord1))
-                  numRecruitedTemp -= 1 
-                  
-            
-            # Prioritize locations with high HGF
-            for x,y in coord:
-                fieldVal.append(self.field.HGF[x.item(), y.item(), 1])
-            indexTopRegion = np.argsort(fieldVal)[-numRecruited:]  # sorts to get top numbers (going from the end because sorts low to high)
-            toPlace = coord[indexTopRegion]
+            coord = np.empty([0, 2])
+            if numRecruited > 0:
+                need = numRecruited * recruitMultiplier
+                while need > 0:
+                    cx = np.random.randint(1, self.dim.x, need)
+                    cy = np.random.randint(1, self.dim.y, need)
+                    ok = [(int(x), int(y)) for x, y in zip(cx, cy)
+                          if fieldRepel[int(x), int(y), 1] < 0.1]
+                    if ok:
+                        coord = np.vstack((coord, np.array(ok)))
+                        need -= len(ok)
+
+            if coord.shape[0] == 0:
+                toPlace = np.empty([0, 2])
+            else:
+                fieldVal = [self.field.HGF[int(x), int(y), 1] for x, y in coord]
+                indexTopRegion = np.argsort(fieldVal)[-numRecruited:]
+                toPlace = coord[indexTopRegion]
             for x,y in toPlace:
                 cell = self.cellField[x.item(),y.item(),1]
                 if not cell:
@@ -907,33 +901,26 @@ class MacrophageSteppable(SteppableBasePy):
         IL10secretor = self.get_field_secretor("IL10") 
                             
         # Macrophage recruitment proportional to mean level of MCP
-        if mcs %6 == 0: 
+        if mcs %6 == 0:
             MCPfield = self.field.MCP
             TGFfield = self.field.TGF
-            TGF_fieldval = np.zeros((self.dim.x,self.dim.y))
-            MCP_fieldval = np.zeros((self.dim.x,self.dim.y))
-            for i in range(0,self.dim.x-1):
-                for j in range(0,self.dim.y-1):
-                    MCP_fieldval[i,j] = MCPfield[i,j,1]
-                    TGF_fieldval[i,j] = TGFfield[i,j,1]
-            
-            MCPMean = np.mean(MCP_fieldval)
+            # Mean MCP by a 500-point random sample instead of a full-lattice
+            # Python loop (33k-133k iterations every 6 MCS).
+            _sx = np.random.randint(0, self.dim.x - 1, 500)
+            _sy = np.random.randint(0, self.dim.y - 1, 500)
+            MCPMean = float(np.mean([MCPfield[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
             if MCPMean > macRecruitThres and necrosisRemain > macRecruitStop:
-                numRecruited = np.ceil(macroRecruitmentProportion * MCPMean)
-                numRecruited = numRecruited.astype(int)
-                      
-                # Monocytes transported to injury site from healthy capillaries 
-                CapillaryLocations = np.empty([0 , 2])
-                while numRecruited > 0: # while still recruiting get the coords of capillaries
-                    for cell in self.cell_list_by_type(self.CAPILLARY): # Get location of all the capillaries 
-                        if cell.dict['fragmented'] == 2: # Only get location of capillaries that are healthy/perfusing
-                            xcoord1 = cell.xCOM 
-                            ycoord1 = cell.yCOM
-                            CapillaryLocations1 = np.array([xcoord1, ycoord1]) # put into an array 
-                            CapillaryLocations = np.vstack((CapillaryLocations,CapillaryLocations1)) # sort locations row wise
-                            numRecruited -= len(CapillaryLocations) # Update the numRecruited to subtract monocytes that have been recruited
-                
-                # Place monocyte if cell doesn't exist in that location 
+                numRecruited = int(np.ceil(macroRecruitmentProportion * MCPMean))
+
+                # Monocytes enter at healthy/perfusing capillaries. Gather those
+                # once (the original grew the list via np.vstack in a
+                # while-numRecruited>0 loop); place at most one per capillary.
+                _cap = [[c.xCOM, c.yCOM] for c in self.cell_list_by_type(self.CAPILLARY)
+                        if c.dict['fragmented'] == 2]
+                CapillaryLocations = (np.array(_cap[:numRecruited]) if _cap
+                                      else np.empty([0, 2]))
+
+                # Place monocyte if cell doesn't exist in that location
                 for x,y in CapillaryLocations:
                     cell = self.cellField[x.item(),y.item(),1]
                     if not cell:

@@ -131,17 +131,12 @@ class RLSteppable(SteppableBasePy):
         # -------------------------------------------------- SSC recruitment
         # Verbatim from SSCSteppable.step (environment behaviour, not an action).
         if mcs % SSCRecruitmentFreq == 0 and necrosisRemain > macRecruitStop:
-            HGF_fieldval = np.zeros((self.dim.x, self.dim.y))
-            MMP_fieldval = np.zeros((self.dim.x, self.dim.y))
-            TGF_fieldval = np.zeros((self.dim.x, self.dim.y))
-            for i in range(0, self.dim.x - 1):
-                for j in range(0, self.dim.y - 1):
-                    HGF_fieldval[i, j] = HGFf[i, j, 1]
-                    MMP_fieldval[i, j] = MMPf[i, j, 1]
-                    TGF_fieldval[i, j] = TGFf[i, j, 1]
-            HGFMean = np.mean(HGF_fieldval)
-            MMPMean = np.mean(MMP_fieldval)
-            TGFMean = np.mean(TGF_fieldval)
+            # Field means by a 500-point random sample (was a full-lattice loop).
+            _sx = np.random.randint(0, self.dim.x - 1, 500)
+            _sy = np.random.randint(0, self.dim.y - 1, 500)
+            HGFMean = float(np.mean([HGFf[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
+            MMPMean = float(np.mean([MMPf[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
+            TGFMean = float(np.mean([TGFf[int(x), int(y), 1] for x, y in zip(_sx, _sy)]))
 
             numRecruited = int(np.ceil(recruitmentProportionSSC * (HGFMean + MMPMean - TGFMean)))
             if numRecruited > 0:
@@ -149,11 +144,13 @@ class RLSteppable(SteppableBasePy):
                 coord = np.empty([0, 2])
                 need = numRecruited * recruitMultiplier
                 while need > 0:
-                    xc = np.random.randint(1, self.dim.x)
-                    yc = np.random.randint(1, self.dim.y)
-                    if fieldRepel[xc, yc, 1] < 0.1:
-                        coord = np.vstack((coord, [xc, yc]))
-                        need -= 1
+                    cx = np.random.randint(1, self.dim.x, need)
+                    cy = np.random.randint(1, self.dim.y, need)
+                    ok = [(int(x), int(y)) for x, y in zip(cx, cy)
+                          if fieldRepel[int(x), int(y), 1] < 0.1]
+                    if ok:
+                        coord = np.vstack((coord, np.array(ok)))
+                        need -= len(ok)
                 vals = [HGFf[int(x), int(y), 1] for x, y in coord]
                 for x, y in coord[np.argsort(vals)[-numRecruited:]]:
                     xi, yi = int(x), int(y)

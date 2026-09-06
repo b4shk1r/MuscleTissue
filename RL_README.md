@@ -8,7 +8,9 @@ muscle-regeneration model, for reinforcement-learning experiments.
 | file | role | edit? |
 |---|---|---|
 | `rl_env.py` | `MuscleRegenEnv` (gym-style `reset`/`step`/`close`) + `policy()` / `reward_fn()` stubs | **yes — this is the only file you touch** |
-| `simservice_smoketest.py` | GO/NO-GO test that CC3D can be stepped one MCS at a time | run it, don't edit |
+| `rl_driver.py` | in-process one-MCS-at-a-time CC3D stepper | no |
+| `rl_stage.py` | stages a `.git`-free copy of the model for CC3D | no |
+| `step_smoketest.py` | quick check that stepping works on your build | run it, don't edit |
 | `Simulation/RLSteppable.py` | replaces `SSCSteppable`; applies actions, exports obs + raw signals | no |
 | `Simulation/MuscleRegenRL.py` | steppable registration for the RL model | no |
 | `MuscleRegenRL.cc3d` / `MuscleRegenRLQuarter.cc3d` | full / quarter RL model | no |
@@ -16,16 +18,16 @@ muscle-regeneration model, for reinforcement-learning experiments.
 ## Use
 
 ```bash
-conda activate cc3d                              # compucell3d + rtree + gymnasium
-xvfb-run -a python simservice_smoketest.py --rl --quarter   # must pass first
-python rl_env.py --quarter --steps 200                      # demo rollout
+conda activate cc3d                       # compucell3d 4.10 + rtree (+ gymnasium)
+python step_smoketest.py --rl --quarter   # ~1 min setup + ~20 s/step
 ```
 
 ```python
 from rl_env import MuscleRegenEnv
-env = MuscleRegenEnv(quarter=True, output_dir="/tmp/run0", seed=0)
-obs, info = env.reset()
+env = MuscleRegenEnv(quarter=True, seed=0)
+obs, info = env.reset()                          # obs = {cell_id: np.array(22,)}
 obs, reward, done, trunc, info = env.step({cid: 0 for cid in obs})   # advance 1 MCS
+env.close()
 ```
 
 7 discrete actions (noop/migrate, activate, divide, differentiate, fuse-to-fiber,
@@ -33,9 +35,24 @@ fuse-to-myotube, apoptose); 22-float observation per SSC. Full detail:
 `../docs/rl-quickstart.md` and the docstrings in `rl_env.py` /
 `Simulation/RLSteppable.py`.
 
+## How it steps CC3D
+
+Not via `simservice` — that path is broken for this model (the spawned worker's
+Python steppables never see the C++ cells). `rl_driver.CC3DDriver` runs CC3D's
+normal CML main loop but pauses it before the `while` loop and steps it by hand,
+in-process. Consequences:
+
+- **one sim per process** (CC3D core + model module-globals are singletons) —
+  run parallel rollouts as separate processes.
+- no multiprocessing, so `rl_env` imports cleanly anywhere, no `__main__` guard.
+- `seed=` seeds numpy + `random` in the model (`MUSCLEREGEN_SEED`); the Potts core
+  RNG needs `<RandomSeed>` in `Simulation/MuscleRegen*.xml`.
+- no mid-episode snapshot/restore; `reset()` is a fresh sim from the fixed injury.
+
 ## Status
 
-Written, **not yet run end-to-end** (needs CC3D). The `service_cc3d(...)` call in
-`rl_env.reset()` may need tweaking for the installed CC3D version — the smoke
-test surfaces that. See `../docs/upgrade-plan.md` for the full plan and open
-items.
+Verified end-to-end on **CC3D 4.10** (quarter lattice): stepping works, steppables
+see all cells, SSC recruitment grows the agent set, obs/reward exported each step.
+**~22 s/MCS** on one Mac core — the vectorisation rewrites (docs/upgrade-plan.md
+§3.1) still need porting to bring that down. Full-lattice RL model untested for
+runtime. See `../docs/upgrade-plan.md`.
