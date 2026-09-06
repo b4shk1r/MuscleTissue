@@ -8,6 +8,24 @@ import random
 import math
 import os
 
+# track_cell_level_scalar_attribute() registers player-only visualisation fields
+# that CC3D materialises in initialize_tracking_fields(). Under CC3D 4.9's
+# simservice that call chain hits
+# SimulationThread.add_visualization_field(precision_type=...), which that build
+# does not accept -> TypeError that aborts start(). The tracked fields are pure
+# eye-candy (nothing in the model reads them back), so swallow that failure and
+# carry on. On builds where it works, it still works.
+try:
+    _orig_itf = SteppableBasePy.initialize_tracking_fields
+    def _safe_initialize_tracking_fields(self):
+        try:
+            return _orig_itf(self)
+        except TypeError:
+            return None
+    SteppableBasePy.initialize_tracking_fields = _safe_initialize_tracking_fields
+except Exception:
+    pass
+
 # Optional determinism. Set the env var MUSCLEREGEN_SEED to an integer to seed
 # both RNGs that the Python steppables use (numpy is the dominant source of
 # stochasticity -- cell placement, every divide/diff/apoptosis draw, injury site,
@@ -1684,36 +1702,49 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
         self.track_cell_level_scalar_attribute(field_name='clusterNum', attribute_name='clusterNum')
 
     def start(self):
-        # join all connected fibers into one cluster
+        # Join all connected fibers into one cluster via union-find over CC3D cell
+        # ids. The original did an O(N^2) membership scan across growing cluster
+        # lists -- pathologically slow for large fiber-pixel counts (it hangs for
+        # minutes on the quarter lattice). Union-find with path compression is
+        # near-linear and produces the same clusters.
+        print("[FiberSteppable] clustering fibers...", flush=True)
         global fiberGroups
+        fiber_cells = list(self.cell_list_by_type(self.FIBER))
+        parent = {cell.id: cell.id for cell in fiber_cells}
+
+        def find(cid):
+            root = cid
+            while parent[root] != root:
+                root = parent[root]
+            while parent[cid] != root:
+                parent[cid], cid = root, parent[cid]
+            return root
+
+        def union(a, b):
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[ra] = rb
+
+        for cell in fiber_cells:
+            for neighbor, _ in self.get_cell_neighbor_data_list(cell):
+                if neighbor and neighbor.type == self.FIBER:
+                    union(cell.id, neighbor.id)
+
         fiberGroups = {}
-        for cell in self.cell_list_by_type(self.FIBER): # Check all fibers
-            cluster = None
-            for neighbor, _ in self.get_cell_neighbor_data_list(cell): # Check current fiber neighbors
-                if neighbor and neighbor.type == self.FIBER: # Make sure neighbor is a fiber
-                    for group in fiberGroups: # For each cluster
-                        if group != cluster:
-                            if any(neighbor.id == item.id for item in fiberGroups[group]):
-                            # if neighbor in fiberGroups[group]: Go through existing clusters to see if neighbor is in cluster
-                                if cluster != None: # already assigned to a cluster 
-                                    fiberGroups[cluster].extend(fiberGroups[group]) # Adding connecting groups
-                                    fiberGroups.pop(group) # Gets rid of the group that we added so not duplicated
-                                else: 
-                                   fiberGroups[group].append(cell) # Not in a cluster so adding to nearby existing cluster
-                                   cluster = group
-                                break
-            if cluster == None:
-                fiberGroups[cell.clusterId] = [cell] # Starting a new cluster if no neighbors are a cluster
-        
-        compartmentNum = 1        
+        for cell in fiber_cells:
+            fiberGroups.setdefault(find(cell.id), []).append(cell)
+
+        compartmentNum = 1
         for group in fiberGroups:
             for cell in fiberGroups[group]:
                 self.reassign_cluster_id(cell, group)
                 cell.dict['clusterNum'] = compartmentNum
                 compartmentNum += 1
-        
+
         global numFiberCells
         numFiberCells = len(fiberGroups)
+        print(f"[FiberSteppable] {len(fiber_cells)} fiber cells -> {numFiberCells} clusters",
+              flush=True)
         
         # Repel cells from wall/keep on the muscle cross section
         secretor = self.get_field_secretor("REPEL")
