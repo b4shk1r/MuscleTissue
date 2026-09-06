@@ -179,7 +179,9 @@ class RLSteppable(SteppableBasePy):
                for c in ssc_cells}
 
         inp = pg.input_object
-        actions = inp.get("actions", {}) if isinstance(inp, dict) else {}
+        _raw_actions = inp.get("actions", {}) if isinstance(inp, dict) else {}
+        # keys may arrive as str if simservice JSON-serialises the input
+        actions = {int(k): int(v) for k, v in _raw_actions.items()}
 
         # -------------------------------------------------- apply actions
         for cell in ssc_cells:
