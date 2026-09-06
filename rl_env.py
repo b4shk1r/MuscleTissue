@@ -81,10 +81,13 @@ class MuscleRegenEnv(_Base):
 
     metadata = {"render_modes": []}
 
-    def __init__(self, quarter: bool = False, output_dir: str = "/tmp/cc3d_rl_default",
+    def __init__(self, quarter: bool = False, output_dir: str | None = None,
                  seed: int | None = None):
-        self.sim_file = str(_HERE / ("MuscleRegenRLQuarter.cc3d" if quarter
-                                     else "MuscleRegenRL.cc3d"))
+        self._cc3d_name = "MuscleRegenRLQuarter.cc3d" if quarter else "MuscleRegenRL.cc3d"
+        # CC3D's simservice unconditionally copies the folder holding the .cc3d
+        # file into its output dir on start, so we run from a staged .git-free
+        # copy (rl_stage.py). `output_dir` here is ignored unless you need VTK
+        # snapshots — pass one OUTSIDE the repo if so.
         self.output_dir = output_dir
         self.seed_value = seed
         self.rng = np.random.default_rng(seed)
@@ -105,16 +108,19 @@ class MuscleRegenEnv(_Base):
             self.rng = np.random.default_rng(seed)
 
         self._close_sim()
-        os.makedirs(self.output_dir, exist_ok=True)
         if self.seed_value is not None:
             os.environ["MUSCLEREGEN_SEED"] = str(self.seed_value)
 
         from cc3d.core.simservice.PyServiceCC3D import service_cc3d
+        from rl_stage import sim_paths
+        sim_file, staged_out = sim_paths(self._cc3d_name)
+        out_dir = self.output_dir or staged_out
+        os.makedirs(out_dir, exist_ok=True)
         self._sim = service_cc3d(
-            cc3d_sim_fname=self.sim_file,
+            cc3d_sim_fname=sim_file,
             output_frequency=0,
             screenshot_output_frequency=0,
-            output_dir=self.output_dir,
+            output_dir=out_dir,
         )
         self._sim.run()
         self._sim.init()
@@ -194,7 +200,8 @@ if __name__ == "__main__":
     ap.add_argument("--quarter", action="store_true", help="use the quarter lattice")
     ap.add_argument("--steps", type=int, default=200, help="max env steps")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--output-dir", default="/tmp/cc3d_rl_demo")
+    ap.add_argument("--output-dir", default=None,
+                    help="optional VTK output dir; must be OUTSIDE this repo")
     args = ap.parse_args()
 
     env = MuscleRegenEnv(quarter=args.quarter, output_dir=args.output_dir, seed=args.seed)

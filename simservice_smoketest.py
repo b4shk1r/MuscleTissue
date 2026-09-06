@@ -35,8 +35,6 @@ def main():
         cc3d = "MuscleRegenRLQuarter.cc3d" if args.quarter else "MuscleRegenRL.cc3d"
     else:
         cc3d = "MuscleRegenQuarter.cc3d" if args.quarter else "MuscleRegen.cc3d"
-    sim_file = str(_HERE / cc3d)
-    print(f"[smoke] sim file: {sim_file}")
 
     try:
         from cc3d.core.simservice.PyServiceCC3D import service_cc3d
@@ -45,12 +43,17 @@ def main():
         print("[smoke] this CC3D build may not ship simservice — RL approach blocked.")
         sys.exit(2)
 
+    # Run from a staged, .git-free copy (see rl_stage.py for why).
+    from rl_stage import sim_paths
+    sim_file, out_dir = sim_paths(cc3d)
+    print(f"[smoke] staged sim file: {sim_file}")
+
     t0 = time.time()
     sim = service_cc3d(
         cc3d_sim_fname=sim_file,
         output_frequency=0,
         screenshot_output_frequency=0,
-        output_dir="/tmp/cc3d_smoketest",
+        output_dir=out_dir,
     )
     sim.run()
     sim.init()
