@@ -1705,14 +1705,6 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
         # lists -- pathologically slow for large fiber-pixel counts (it hangs for
         # minutes on the quarter lattice). Union-find with path compression is
         # near-linear and produces the same clusters.
-        print("[FiberSteppable] clustering fibers...", flush=True)
-        try:
-            from collections import Counter as _C
-            _h = _C(c.type for c in self.cell_list)
-            print(f"[FiberSteppable] cell-type histogram: {dict(_h)} ; "
-                  f"self.FIBER={self.FIBER} self.ECM={self.ECM} self.WALL={self.WALL}", flush=True)
-        except Exception as _e:
-            print(f"[FiberSteppable] histogram failed: {_e!r}", flush=True)
         global fiberGroups
         fiber_cells = list(self.cell_list_by_type(self.FIBER))
         parent = {cell.id: cell.id for cell in fiber_cells}
