@@ -1,0 +1,6 @@
+<Simulation version="4.2.5">
+   <XMLScript Type="XMLScript">Simulation/MuscleRegenQuarter.xml</XMLScript>
+   <PythonScript Type="PythonScript">Simulation/MuscleRegenRL.py</PythonScript>
+   <Resource Type="Python">Simulation/MuscleRegenSteppables.py</Resource>
+   <Resource Type="Python">Simulation/RLSteppable.py</Resource>
+</Simulation>

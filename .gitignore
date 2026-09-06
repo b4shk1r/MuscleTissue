@@ -7,6 +7,9 @@ cc3d.sif
 muscleregen_results/
 test_out/
 qt_out/
+lattice_out/
+cc3d_rl_*/
+/tmp_cc3d_*/
 
 # OS / editor cruft
 .DS_Store
