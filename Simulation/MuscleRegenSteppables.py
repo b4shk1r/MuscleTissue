@@ -8,21 +8,19 @@ import random
 import math
 import os
 
-# track_cell_level_scalar_attribute() registers player-only visualisation fields
-# that CC3D materialises in initialize_tracking_fields(). Under CC3D 4.9's
-# simservice that call chain hits
-# SimulationThread.add_visualization_field(precision_type=...), which that build
-# does not accept -> TypeError that aborts start(). The tracked fields are pure
-# eye-candy (nothing in the model reads them back), so swallow that failure and
-# carry on. On builds where it works, it still works.
+# CC3D 4.9.0 bug: the headless SimulationThread.add_visualization_field(self,
+# field_name, field_type) does not accept the precision_type kwarg that
+# FieldRegistry.create_fields() passes it, so any visualisation field (the
+# track_cell_level_scalar_attribute() cell-colouring fields, plus fields created
+# in simulation_setup.run()) raises TypeError and aborts startup under simservice.
+# Widen the signature to swallow it. It is a no-op body anyway.
 try:
-    _orig_itf = SteppableBasePy.initialize_tracking_fields
-    def _safe_initialize_tracking_fields(self):
-        try:
-            return _orig_itf(self)
-        except TypeError:
+    from cc3d.CompuCellSetup.SimulationThread import SimulationThread as _HeadlessSimThread
+    import inspect as _inspect
+    if "precision_type" not in _inspect.signature(_HeadlessSimThread.add_visualization_field).parameters:
+        def _avf(self, field_name, field_type, *a, **kw):
             return None
-    SteppableBasePy.initialize_tracking_fields = _safe_initialize_tracking_fields
+        _HeadlessSimThread.add_visualization_field = _avf
 except Exception:
     pass
 
@@ -1708,6 +1706,13 @@ class FiberSteppable(SteppableBasePy): # make fiber clusters and adjust repeal s
         # minutes on the quarter lattice). Union-find with path compression is
         # near-linear and produces the same clusters.
         print("[FiberSteppable] clustering fibers...", flush=True)
+        try:
+            from collections import Counter as _C
+            _h = _C(c.type for c in self.cell_list)
+            print(f"[FiberSteppable] cell-type histogram: {dict(_h)} ; "
+                  f"self.FIBER={self.FIBER} self.ECM={self.ECM} self.WALL={self.WALL}", flush=True)
+        except Exception as _e:
+            print(f"[FiberSteppable] histogram failed: {_e!r}", flush=True)
         global fiberGroups
         fiber_cells = list(self.cell_list_by_type(self.FIBER))
         parent = {cell.id: cell.id for cell in fiber_cells}
