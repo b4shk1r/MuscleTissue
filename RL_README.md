@@ -51,8 +51,14 @@ in-process. Consequences:
 
 ## Status
 
-Verified end-to-end on **CC3D 4.10** (quarter lattice): stepping works, steppables
-see all cells, SSC recruitment grows the agent set, obs/reward exported each step.
-**~22 s/MCS** on one Mac core — the vectorisation rewrites (docs/upgrade-plan.md
-§3.1) still need porting to bring that down. Full-lattice RL model untested for
-runtime. See `../docs/upgrade-plan.md`.
+Verified end-to-end on **CC3D 4.10**, one Mac core:
+
+| model | setup | per MCS |
+|---|---|---|
+| quarter (`--quarter` / `MuscleRegenRLQuarter.cc3d`) | ~3 s | ~0.4 s |
+| full lattice (`MuscleRegenRL.cc3d`) | ~6 s | ~1.7 s |
+
+3 concurrent rollouts (separate processes) run clean — `python parallel_test.py`.
+Remaining: SLURM script for the cluster + headless-Linux check; `_execute_action`
+fidelity and custom-observation hooks are decisions for the collaborator. See
+`../docs/upgrade-plan.md`.
