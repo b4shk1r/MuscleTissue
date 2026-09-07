@@ -25,7 +25,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1          # one core per sim process (CC3D Potts is ~single-threaded)
-#SBATCH --mem=2G                   # ~0.5 GB quarter, ~1.5 GB full lattice
+#SBATCH --mem=3000M               # ~0.5 GB quarter, ~1.5 GB full lattice; headroom for the learner
 #SBATCH --array=1-4                # 4 seeds; widen for more replicates
 #SBATCH --output=muscleregen_rl-%A_%a.out
 
