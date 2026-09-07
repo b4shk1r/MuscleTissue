@@ -126,10 +126,13 @@ def _parse_obs(out: dict) -> dict:
 # ============================================================================
 
 def reward_fn(raw: dict, prev_raw: dict) -> float:
-    """Scalar reward from the raw quantities RLSteppable exports each step.
+    """Scalar reward from the whole-tissue quantities RLSteppable exports each step.
 
-    `raw` keys: fiber_volume, initial_fiber_volume, newMyotube, n_ssc,
-                n_myotube_immature, necrosisRemain
+    `raw` keys (all plain scalars unless noted):
+        mcs, fiber_volume, initial_fiber_volume, fiber_count, n_myotube_immature,
+        newMyotube, n_ssc, n_ssc_active, n_myoblast, n_myocyte, n_macrophage,
+        n_neutrophil, n_fibroblast, n_necrotic, necrosisRemain, collagen_mean,
+        collagen_fibrotic_frac, cyto_mean {HGF,MMP,TGF,VEGF,TNF,IL10}
     `prev_raw` is the same dict from the previous step ({} on the first step).
 
     Default: per-step gain in fiber volume (fraction of initial) + a myotube bonus.
@@ -149,6 +152,65 @@ def policy(obs_vec: np.ndarray, rng: np.random.Generator) -> int:
     """
     return int(rng.integers(N_ACTIONS))
 
+
+# --- Reference baseline: the model's hand-coded SSC decision, as a policy -----
+# Run this through the env (--policy fixed) to get the trajectory the published
+# model produces, so "can RL match / beat the hand-coded policy?" is a direct
+# comparison. APPROXIMATE: the real rule also gates on the ECM cell directly
+# below (collagen level, "repairable" flag) and on being on a *mature*-fiber
+# edge -- neither is in the 22-float obs, so this uses the fiber-neighbour count
+# as a proxy. Thresholds are from Simulation/MuscleRegenSteppables.py.
+_CYTO_MAX = 500.0
+_ACT_THRESH   = 44.7091   # sscActivationThreshold  (HGF to activate)
+_DIV_THRESH   = 126.6268  # SSCdivisionThreshold    (TNF+VEGF-TGF)
+_DIFF_THRESH  = 57.9870   # SSCdiffThreshold        (3*IL10-HGF-TNF-TGF)
+_DIV_PROB     = 0.0972    # sscDivideProb           (divide w/o signal)
+_DIFF_PROB    = 0.6136    # sscDiffProb             (diff w/o signal)
+_APOP_TGF     = 79.1563   # sscTGFApoptosisThreshold
+_APOP_PROB    = 0.7651    # sscApoptosisProb
+_VEGF_BLOCK   = 80.6055   # VEGFblockApop
+_QUIESC_HGF   = 36.3109   # quiescentThreshold
+_DIV_CHANCE   = [0.9, 0.85, 0.65, 0.2]   # sscDivisionChanceSubseq, by numDiv
+
+
+def fixed_policy(obs_vec: np.ndarray, rng: np.random.Generator) -> int:
+    o = obs_vec
+    activated = o[2] > 0.5
+    cell_type = round(float(o[3]) * 2)          # 0 SSC, 1 myoblast, 2 myocyte
+    num_div   = round(float(o[7]) * 4)
+    HGF, MMP, TGF  = o[8] * _CYTO_MAX, o[9] * _CYTO_MAX, o[10] * _CYTO_MAX
+    VEGF, TNF, IL10 = o[11] * _CYTO_MAX, o[12] * _CYTO_MAX, o[13] * _CYTO_MAX
+    nb_fiber   = o[15] * 10.0
+    nb_ecm     = o[16] * 10.0
+    nb_ssc     = o[19] * 10.0
+    nb_macro   = o[20] * 10.0
+    on_fiber_edge = nb_fiber > 0
+
+    if not activated:
+        return 1 if HGF >= _ACT_THRESH else 0     # activate / wait
+
+    # apoptosis check (unconditional in the original, before the decision body)
+    if TGF > _APOP_TGF and rng.random() < _APOP_PROB and VEGF < _VEGF_BLOCK and nb_macro == 0:
+        return 6
+
+    if cell_type == 2:                            # myocyte: try to fuse
+        if nb_ecm > 0 and nb_ssc > 0:
+            return 5                              # fuse with adjacent myocyte -> myotube
+        if nb_ecm > 0:
+            return 4                              # fuse to fiber
+        return 0
+
+    if on_fiber_edge:                             # SSC / myoblast on a fiber edge
+        if (TNF + VEGF - TGF > _DIV_THRESH or rng.random() < _DIV_PROB):
+            if rng.random() < _DIV_CHANCE[min(num_div, 3)]:
+                return 2                          # divide
+        if (3 * IL10 - HGF - TNF - TGF > _DIFF_THRESH or rng.random() < _DIFF_PROB):
+            return 3                              # differentiate
+
+    if HGF < _QUIESC_HGF:
+        return 0                                  # drifts back to quiescence in-model
+    return 0                                      # migrate
+
 # ============================================================================
 #  EDIT ABOVE
 # ============================================================================
@@ -162,17 +224,22 @@ if __name__ == "__main__":
     ap.add_argument("--quarter", action="store_true", help="use the quarter lattice")
     ap.add_argument("--steps", type=int, default=50, help="max env steps")
     ap.add_argument("--seed", type=int, default=0)
+    ap.add_argument("--policy", choices=["random", "fixed"], default="random",
+                    help="'fixed' = the model's hand-coded SSC rule (reference baseline)")
     args = ap.parse_args()
+
+    act_fn = fixed_policy if args.policy == "fixed" else policy
 
     env = MuscleRegenEnv(quarter=args.quarter, seed=args.seed)
     t0 = time.time()
     obs, info = env.reset()
-    print(f"reset: {len(obs)} SSC agents, mcs={info['mcs']}, {time.time()-t0:.1f}s", flush=True)
+    print(f"reset: {len(obs)} SSC agents, mcs={info['mcs']}, {time.time()-t0:.1f}s "
+          f"[{args.policy} policy]", flush=True)
 
     total = 0.0
     for t in range(args.steps):
         ts = time.time()
-        actions = {cid: policy(o, env.rng) for cid, o in obs.items()}
+        actions = {cid: act_fn(o, env.rng) for cid, o in obs.items()}
         obs, reward, done, trunc, info = env.step(actions)
         total += reward
         print(f"  step {t:4d}  mcs={info['mcs']:5d}  agents={len(obs):4d}  "

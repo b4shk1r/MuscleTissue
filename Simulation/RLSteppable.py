@@ -249,23 +249,55 @@ class RLSteppable(SteppableBasePy):
             cell.dict['time2activate'] -= 1
 
         # -------------------------------------------------- export raw signals + obs
-        cur_fiber = sum(c.volume for c in self.cell_list_by_type(self.FIBER))
-        n_ssc = len(self.cell_list_by_type(self.SSC))
-        done = (mcs + 1 >= self.simulator.getNumSteps()) or (n_ssc > _SSC_BLOWUP)
+        raw = self._raw_signals(mcs, HGFf, MMPf, TGFf, VEGFf, TNFf, IL10f, necrosisRemain)
+        done = (mcs + 1 >= self.simulator.getNumSteps()) or (raw["n_ssc"] > _SSC_BLOWUP)
 
         pg.return_object = {
             "obs":  {cid: o.tolist() for cid, o in obs.items()},
-            "raw":  {
-                "fiber_volume":         float(cur_fiber),
-                "initial_fiber_volume": float(self._initial_fiber_volume),
-                "newMyotube":           int(getattr(sim_params, 'newMyotube', 0)),
-                "n_ssc":                n_ssc,
-                "n_myotube_immature":   sum(1 for c in self.cell_list_by_type(self.FIBER)
-                                            if c.dict.get('time2mature', -1) > -1),
-                "necrosisRemain":       float(necrosisRemain),
-            },
+            "raw":  raw,
             "done": bool(done),
             "mcs":  int(mcs),
+        }
+
+    def _raw_signals(self, mcs, HGFf, MMPf, TGFf, VEGFf, TNFf, IL10f, necrosisRemain):
+        """Whole-tissue quantities for rl_env.reward_fn(). All plain Python scalars."""
+        fibers = list(self.cell_list_by_type(self.FIBER))
+        sscs   = list(self.cell_list_by_type(self.SSC))
+        ecm    = list(self.cell_list_by_type(self.ECM))
+        macs   = list(self.cell_list_by_type(self.MACROPHAGE))
+
+        n_active = sum(1 for c in sscs if c.dict['activationState'] == 1)
+        n_myoblast = sum(1 for c in sscs if c.dict['cellType'] == 1)
+        n_myocyte  = sum(1 for c in sscs if c.dict['cellType'] == 2)
+        collagen = [c.dict.get('collagen', 1.0) for c in ecm]
+
+        # mean cytokines from a 200-point random sample (cheap; feeds reward shaping)
+        sx = np.random.randint(0, self.dim.x - 1, 200)
+        sy = np.random.randint(0, self.dim.y - 1, 200)
+        def _mean(f):
+            return float(np.mean([f[int(x), int(y), 1] for x, y in zip(sx, sy)]))
+
+        return {
+            "mcs":                  int(mcs),
+            "fiber_volume":         float(sum(c.volume for c in fibers)),
+            "initial_fiber_volume": float(self._initial_fiber_volume),
+            "fiber_count":          len(fibers),
+            "n_myotube_immature":   sum(1 for c in fibers if c.dict.get('time2mature', -1) > -1),
+            "newMyotube":           int(getattr(sim_params, 'newMyotube', 0)),
+            "n_ssc":                len(sscs),
+            "n_ssc_active":         n_active,
+            "n_myoblast":           n_myoblast,
+            "n_myocyte":            n_myocyte,
+            "n_macrophage":         len(macs),
+            "n_neutrophil":         len(list(self.cell_list_by_type(self.NEUTROPHIL))),
+            "n_fibroblast":         len(list(self.cell_list_by_type(self.FIBROBLAST))),
+            "n_necrotic":           len(list(self.cell_list_by_type(self.NECROTIC))),
+            "necrosisRemain":       float(necrosisRemain),
+            "collagen_mean":        float(np.mean(collagen)) if collagen else 0.0,
+            "collagen_fibrotic_frac": (sum(1 for v in collagen if v > 10) / len(collagen)
+                                       if collagen else 0.0),
+            "cyto_mean": {"HGF": _mean(HGFf), "MMP": _mean(MMPf), "TGF": _mean(TGFf),
+                          "VEGF": _mean(VEGFf), "TNF": _mean(TNFf), "IL10": _mean(IL10f)},
         }
 
     # ------------------------------------------------------------------ helpers
