@@ -11,9 +11,10 @@ CompuCell3D goes in an Apptainer container (conda inside a container is allowed)
 
 | file | purpose |
 |------|---------|
-| `cc3d.def`          | Apptainer recipe: miniforge + `compucell3d` + `rtree` |
-| `run_cc3d.sh`       | SLURM script — one run |
-| `run_cc3d_array.sh` | SLURM script — N independent replicates (`--array`) |
+| `cc3d.def`          | Apptainer recipe: miniforge + `compucell3d=4.10.*` + `rtree` + `gymnasium` |
+| `run_cc3d.sh`       | SLURM script — one whole-sim run |
+| `run_cc3d_array.sh` | SLURM script — N whole-sim replicates (`--array`) |
+| `run_rl.sh`         | SLURM array — the RL loop (`rl_env.py` + a training script), one run per seed |
 
 ## One-time setup
 
@@ -35,19 +36,41 @@ apptainer build cc3d.sif alliance_hpc/cc3d.def     # ~15 min, writes cc3d.sif in
 ```bash
 cd ~/scratch/ABM-of-Muscle-Regeneration-with-Microvascular-Remodeling
 
-sbatch alliance_hpc/run_cc3d.sh          # one run
-sbatch alliance_hpc/run_cc3d_array.sh    # 20 replicates
+sbatch alliance_hpc/run_cc3d.sh          # one whole-sim run
+sbatch alliance_hpc/run_cc3d_array.sh    # 20 whole-sim replicates
 
 squeue -u $USER
 ```
 
-Each job:
+Each whole-sim job:
 1. rsyncs a **private copy** of the model into `~/scratch/muscleregen_results/<jobid>/model/`
    (CC3D 4.10 writes the `FileSteppable` text logs next to the model *source*, not
    the `-o` folder, so copies must not be shared between concurrent jobs);
 2. flips `ifDataSave = 0 -> 1` in that copy (the published code ships with data
    logging off);
 3. runs `cc3d.run_script` under `xvfb` (needed for the offscreen VTK context).
+
+### RL loop
+
+```bash
+# ONE-TIME check that the RL driver works in the container (do this first):
+salloc --account=def-tperkins_cpu --cpus-per-task=1 --mem=2G --time=0:20:0
+apptainer exec --cleanenv --bind "$SLURM_TMPDIR" cc3d.sif \
+    xvfb-run -a python step_smoketest.py --rl --quarter
+exit
+
+# then the array (edit --array in run_rl.sh for #seeds; pass your training script):
+sbatch alliance_hpc/run_rl.sh train.py --quarter --episodes 500
+sbatch alliance_hpc/run_rl.sh                       # no args -> runs the self-check
+```
+
+`run_rl.sh` is a job array — one independent training run per `$SLURM_ARRAY_TASK_ID`
+(used as the seed). It runs your script inside the container under `xvfb`.
+`rl_env.py` is only the environment; you supply `train.py` (the learner + the
+`env.reset()/step()` loop + checkpointing to `$RL_OUT_DIR`). `rl_driver.py` runs
+CC3D one MCS at a time in-process — **not** via `cc3d.run_script` and **not** via
+simservice (which is broken for this model). `rl_stage.py` copies the model into
+`$SLURM_TMPDIR` per process, so concurrent tasks never collide.
 
 ## Output
 

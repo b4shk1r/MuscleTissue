@@ -36,9 +36,11 @@ def main():
         print(f"[smoke] FAIL: cannot import rl_driver ({e!r})")
         sys.exit(2)
 
-    print(f"[smoke] model: {cc3d}")
+    import os
+    seed = int(os.environ.get("MUSCLEREGEN_SEED", "0"))
+    print(f"[smoke] model: {cc3d}  seed: {seed}")
     t0 = time.time()
-    d = CC3DDriver(cc3d, seed=0)
+    d = CC3DDriver(cc3d, seed=seed)
     out = d.start()
     print(f"[smoke] started + MCS 0 in {time.time() - t0:.1f}s", flush=True)
     if args.rl:

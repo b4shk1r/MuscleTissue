@@ -21,11 +21,11 @@ From: condaforge/miniforge3:latest
     apt-get update && apt-get install -y --no-install-recommends \
         xvfb libgl1 libglx-mesa0 libglib2.0-0 && rm -rf /var/lib/apt/lists/*
 
-    # Unpinned = newest CC3D on the compucell3d channel. To reproduce the paper
-    # (eLife 91924, CC3D 4.3.2) use:  compucell3d=4.3.*
+    # CC3D 4.10.* is what the RL driver (rl_driver.py) is verified against.
+    # To reproduce the paper (eLife 91924) instead, use  compucell3d=4.3.*
     # gymnasium: only needed by rl_env.py (the RL wrapper); harmless otherwise.
     mamba create -y -n cc3d -c compucell3d -c conda-forge \
-        compucell3d rtree gymnasium
+        "compucell3d=4.10.*" rtree gymnasium
     mamba clean -a -y
 
 %environment

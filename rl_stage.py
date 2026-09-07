@@ -17,11 +17,21 @@ scratch dir. Call `stage_model()` and pass the returned paths to `service_cc3d`.
 from __future__ import annotations
 
 import atexit
+import os
 import shutil
 import tempfile
 from pathlib import Path
 
 _REPO = Path(__file__).resolve().parent
+
+
+def _scratch_root() -> str | None:
+    """Node-local fast scratch on a SLURM job, else the OS default temp dir."""
+    for var in ("SLURM_TMPDIR", "TMPDIR"):
+        d = os.environ.get(var)
+        if d and os.path.isdir(d):
+            return d
+    return None
 
 # Only these are needed to run any MuscleRegen*/RL model.
 _INCLUDE = [
@@ -51,7 +61,7 @@ def stage_model(keep: bool = False) -> Path:
     if "root" in _staged and _staged["root"].exists():
         return _staged["root"]
 
-    tmp = Path(tempfile.mkdtemp(prefix="muscleregen_rl_"))
+    tmp = Path(tempfile.mkdtemp(prefix="muscleregen_rl_", dir=_scratch_root()))
     model = tmp / "model"
     (model / "Simulation").mkdir(parents=True)
 
